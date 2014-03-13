@@ -22,6 +22,13 @@ module.exports = function(options) {
 		})
 	}
 
+	function updateFile(name, content) {
+		return new gutil.File({
+			path: path.join(basePath, name),
+			contents: new Buffer(content)
+		})
+	}
+
 	function getBlockType(content) {
 		return jsReg.test(content) ? 'js' : 'css';
 	}
@@ -58,8 +65,10 @@ module.exports = function(options) {
 		files.forEach(function(file) {
 			buffer.push(String(file.contents));
 		});
-
-		return createFile(name, buffer.join(EOL));
+		if ( /\.php$/.exec(name) )
+			return updateFile(name, buffer.join(EOL));
+		else
+			return createFile(name, buffer.join(EOL));
 	}
 
 	function processTask(index, tasks, name, files, callback) {
@@ -122,7 +131,7 @@ module.exports = function(options) {
 			else
 				html.push(sections[i]);
 
-		process(mainName, [createFile(mainName, html.join(''))], 'html', function(file) {
+		process(mainName, [updateFile(mainName, html.join(''))], 'html', function(file) {
 			push(file);
 			callback();
 		});
@@ -141,7 +150,6 @@ module.exports = function(options) {
 			basePath = file.base;
 			mainPath = path.dirname(file.path);
 			mainName = path.basename(file.path);
-
 			processHtml(String(file.contents), this.push.bind(this), callback);
 		}
 	});
